@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library System - Interactive View</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .navbar {
+            background: var(--card);
+            padding: 1rem 2rem;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Simulation Panel */
+        .simulation-panel {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .simulation-panel h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #991b1b;
+        }
+
+        select,
+        input {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px dotted #e2e8f0;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .admin-only {
+            display: none;
+        }
+
+        .user-only {
+            display: none;
+        }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .bg-green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .bg-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        #formSection {
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div style="font-weight: 800; font-size: 1.25rem; color: var(--primary);">📚 LibGeo Pro</div>
+        <div id="statusIndicator">Memuat status...</div>
+    </nav>
+
+    <div class="container">
+        <!-- Simulation Header -->
+        <div class="simulation-panel">
+            <h3>SIMULASI API:</h3>
+            <div>
+                <label>Role:</label>
+                <select id="simRole" onchange="updateUIState()">
+                    <option value="user">User (Peminjam)</option>
+                    <option value="admin">Admin (Manajemen)</option>
+                </select>
+            </div>
+            <div>
+                <label>User ID:</label>
+                <input type="number" id="simUserId" value="1" style="width: 60px;">
+            </div>
+            <p style="margin:0; font-size: 0.8rem; color: #b91c1c;">*Mengubah ini akan merubah simulasi Header HTTP.</p>
+        </div>
+
+        <div class="grid">
+            <!-- Main Table -->
+            <div class="card">
+                <h2 style="margin-top:0">Daftar Buku</h2>
+                <table id="bookTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Judul</th>
+                            <th>Penulis</th>
+                            <th>Stok</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookList"></tbody>
+                </table>
+            </div>
+
+            <!-- Sidebar Actions -->
+            <div>
+                <div class="card admin-only" id="adminPanel">
+                    <h3 style="margin-top:0">Tambah Buku Baru</h3>
+                    <div id="formSection">
+                        <div class="form-group">
+                            <label>Judul Buku</label>
+                            <input type="text" id="bookTitle" placeholder="Contoh: Belajar Node.js">
+                        </div>
+                        <div class="form-group">
+                            <label>Penulis</label>
+                            <input type="text" id="bookAuthor" placeholder="Nama Penulis">
+                        </div>
+                        <div class="form-group">
+                            <label>Stok Awal</label>
+                            <input type="number" id="bookStock" value="1">
+                        </div>
+                        <button class="btn btn-primary" onclick="handleAddBook()" style="width:100%">Simpan
+                            Buku</button>
+                    </div>
+                </div>
+
+                <div class="card user-only" id="userPanel">
+                    <h3 style="margin-top:0">Mode User</h3>
+                    <p style="font-size: 0.9rem; color: #64748b;">Gunakan tombol <b>Pinjam</b> di tabel. Sistem akan
+                        meminta izin lokasi (Geolocation) Anda secara real-time.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History View (Admin Only) -->
+        <div class="card admin-only">
+            <h2>Riwayat Peminjaman (Global)</h2>
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Buku</th>
+                        <th>Tanggal</th>
+                        <th>Lokasi (Lat, Long)</th>
+                    </tr>
+                </thead>
+                <tbody id="historyList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentBooks = [];
+
+        // 1. Initial Load & UI Switching
+        function updateUIState() {
+            const role = document.getElementById('simRole').value;
+            const adminElements = document.querySelectorAll('.admin-only');
+            const userElements = document.querySelectorAll('.user-only');
+
+            if (role === 'admin') {
+                adminElements.forEach(el => el.style.display = 'block');
+                userElements.forEach(el => el.style.display = 'none');
+                fetchHistory();
+            } else {
+                adminElements.forEach(el => el.style.display = 'none');
+                userElements.forEach(el => el.style.display = 'block');
+            }
+
+            renderBooks();
+        }
+
+        async function fetchBooks() {
+            try {
+                const res = await fetch('/api/books');
+                currentBooks = await res.json();
+                renderBooks();
+                document.getElementById('statusIndicator').innerHTML = `<span class="badge bg-green">Online: ${currentBooks.length} Buku</span>`;
+            } catch (err) {
+                document.getElementById('statusIndicator').innerHTML = `<span class="badge bg-red">Offline: Error API</span>`;
+            }
+        }
+
+        async function fetchHistory() {
+            const role = document.getElementById('simRole').value;
+            if (role !== 'admin') return;
+
+            try {
+                const res = await fetch('/api/borrow/history', {
+                    headers: { 'x-user-role': 'admin' }
+                });
+                const logs = await res.json();
+                const list = document.getElementById('historyList');
+                list.innerHTML = logs.length ? '' : '<tr><td colspan="4">Belum ada riwayat.</td></tr>';
+
+                logs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td>#${log.userId}</td>
+                    <td>${log.Book ? log.Book.title : 'Deleted Book'}</td>
+                    <td>${new Date(log.borrowDate).toLocaleString('id-ID')}</td>
+                    <td><a href="https://www.google.com/maps?q=${log.latitude},${log.longitude}" target="_blank">${log.latitude}, ${log.longitude}</a></td>
+                `;
+                    list.appendChild(tr);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function renderBooks() {
+            const role = document.getElementById('simRole').value;
+            const list = document.getElementById('bookList');
+            list.innerHTML = '';
+
+            currentBooks.forEach(book => {
+                const tr = document.createElement('tr');
+                let actions = '';
+
+                if (role === 'admin') {
+                    actions = `<button class="btn btn-danger" onclick="deleteBook(${book.id})">Hapus</button>`;
+                } else {
+                    actions = `<button class="btn btn-accent" ${book.stock <= 0 ? 'disabled' : ''} onclick="handleBorrow(${book.id})">Pinjam</button>`;
+                }
+
+                tr.innerHTML = `
+                <td>${book.id}</td>
+                <td><b>${book.title}</b></td>
+                <td>${book.author}</td>
+                <td><span class="badge ${book.stock > 0 ? 'bg-green' : 'bg-red'}">${book.stock}</span></td>
+                <td>${actions}</td>
+            `;
+                list.appendChild(tr);
+            });
+        }
+
+        // 2. Logic Features
+        async function handleAddBook() {
+            const title = document.getElementById('bookTitle').value;
+            const author = document.getElementById('bookAuthor').value;
+            const stock = document.getElementById('bookStock').value;
+
+            if (!title || !author) return alert('Judul dan Penulis wajib diisi!');
+
+            try {
+                const res = await fetch('/api/books', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-role': 'admin'
+                    },
+                    body: JSON.stringify({ title, author, stock })
+                });
+
+                if (res.ok) {
+                    alert('Buku berhasil ditambahkan!');
+                    document.getElementById('bookTitle').value = '';
+                    document.getElementById('bookAuthor').value = '';
+                    fetchBooks();
+                }
+            } catch (err) { alert('Gagal menambah buku'); }
+        }
+
+        async function deleteBook(id) {
+            if (!confirm('Yakin ingin menghapus buku ini?')) return;
+
+            try {
+                await fetch(`/api/books/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-user-role': 'admin' }
+                });
+                fetchBooks();
+            } catch (err) { alert('Gagal menghapus'); }
+        }
+
+        function handleBorrow(bookId) {
+            const userId = document.getElementById('simUserId').value;
+
+            if (!navigator.geolocation) {
+                return alert('Browser Anda tidak mendukung Geolocation.');
+            }
+
+            alert('Sistem akan meminta izin lokasi. Harap klik Allow.');
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+
+                try {
+                    const res = await fetch('/api/borrow', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-user-role': 'user',
+                            'x-user-id': userId
+                        },
+                        body: JSON.stringify({ bookId, latitude, longitude })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok) {
+                        alert(`Berhasil Meminjam!\nLokasi Anda: ${latitude}, ${longitude}`);
+                        fetchBooks();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (err) { alert('Gagal memproses peminjaman.'); }
+            }, (err) => {
+                alert('Akses lokasi ditolak. Peminjaman gagal.');
+            });
+        }
+
+        // Start
+        fetchBooks();
+        updateUIState();
+    </script>
+
+</body>
+
+</html>
